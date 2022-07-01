@@ -1,0 +1,171 @@
+// 1. Implement LRU cache.
+
+// Database interface
+class DatabaseDao {
+  string get(string key) {...}
+  void put(string key) {...}
+  boolean containsKey(string key) {...}
+}
+
+class KeyNotFoundException : Exception {
+    public:
+        KeyNotFoundException() {
+            throw new Exception("Key not found exception");
+        }
+        
+}
+//we have oldest element
+// if not present we have keynotfoundexception
+// if we are accessing the data so we will return the value and keep it as recently used
+// 
+// Cache Access layer
+
+class LRUCache {
+  private:
+    DatabaseDao db;
+    int pageSize;
+    
+    public:
+    list<string>lis;
+    unordered_map<string,string>mp_key;
+    unordered_map<string,list<string> :: iterator>mp_lru;
+    int cursize;
+
+  public:
+    LRUCache(int pageSize, DatabaseDao db) {
+        this.pageSize = pageSize;
+        this.db = db;
+        cursize=0;
+        while(!lis.empty())lis.pop_back();
+        mp_key.clear();
+        mp_lru.clear();
+        
+    }
+    void insertkey(string key,string val){
+        lis.push_front(key);
+        mp_key[key]=val;
+        mp_lru[key]=lis.front();
+        cursize++;
+    }
+    void deletekey(string key){
+        list iterator :: itr=mp_lru[key];
+        mp_lru.erase(key);
+        lis.erase(itr);
+        mp_key.erase(key);
+        cursize--;
+    }
+    string get(string key) throws KeyNotFoundException {
+        
+        if(mp_key.find(key)!=mp_key.end()){
+            deletekey(key);
+            insertkey(key,mp_key(key));
+        }
+        else {
+            if(db.containskey(key)==false){
+                throw new KeyNotFoundException();
+            }
+            string cur_element=db.get(key);
+            if(cursize<pagesize){
+                insertkey(key,cur_element);
+            }
+            else {
+                string last=lis.back();
+                deletekey(last);
+                insertkey(key,cur_element);
+            }
+            
+        }
+        return mp_key[key];
+    }
+}
+
+
+
+// usage
+DatabaseDao db = new DynamoDBDao();
+LRUCache cache = new LRUCache(2, db);
+
+db.put("1", "alpha");
+db.put("2", "beta");
+db.put("3", "gamma");
+db.put("4", "alpha");
+db.put("5", "meta");
+
+// 2 3 4 5 => 3 2 4 5 => 6 3 2 4 
+// cache -> {}
+cache.get("4") // cache miss -> {4}
+cache.get("5") // cache miss -> {4, 5}
+cache.get("2") // cache miss ->  {2, 5}
+cache.get("5") // cache hit -> {2, 5}
+cache.get("2") // cache hit -> {2, 5}
+cache.get("6") // cache hit -> {6, 2}
+
+
+########################################################################################################################
+/**
+
+Suppose there is a circle. There are n petrol pumps on that circle. You are given two sets of data.
+1. The amount of petrol that every petrol pump has.
+2. Distance from that petrol pump to the next petrol pump.
+
+Calculate the first point from where a truck will be able to complete the circle (The truck will stop at each petrol pump and it has infinite capacity).
+Assume for 1-litre petrol, the truck can go 1 unit of distance.
+
+
+For example, let there be 4 petrol pumps with amount of petrol and distance to next petrol pump value pairs as 
+{4, 6}, {6, 5}, {7, 3} and {4, 5}. The first point from where the truck can make a circular tour is 2nd petrol pump. 
+Output should be “start = 1” (index of 2nd petrol pump).
+
+**/ // 1 2 3 4 5 6 7 
+
+// petrol ->    [4, 6, 7, 4]
+// distances -> [6, 5, 3, 5]
+int findStartingPoint(int[] petrol, int[] distances, int m) {
+    int req_petrol=0,start_index=0,extra_petrol=0;
+    
+    
+    for(int index=0;index<m;index++){
+        int cur_index=petrol[index]-distances[index]+extra_petrol;  // -2 1 5 4
+        
+        
+        if(cur_index>0){
+            extra_petrol=cur_index; // 
+        }
+        else {
+            req_petrol+=cur_index; // -2
+            start_index=index+1;  // 1
+            extra_petrol=0;      // 0  1  5  4
+        }
+    }
+    
+    return start_index;
+    
+}
+
+// Time complexity for the above algorithm is O(size_of_the array) => O(m)
+// space complexity is O(1)
+
+
+########################################################################################################################
+
+
+// What is the time complexity of the following code
+for(int i = 0; i < n; i++) {
+    i *= k;
+}
+
+
+// Time complexity of the above give is (log n base k)
+
+
+
+########################################################################################################################
+// What is the time complexity of the following code
+int i, j, k = 0;
+for (i = n / 2; i <= n; i++) {
+    for (j = 2; j <= n; j = j * 2) {
+        k = k + n / 2;
+    }
+}
+
+// Time complexity for the above given is (nlogn)
